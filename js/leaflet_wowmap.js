@@ -73,7 +73,7 @@
 
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = Initialize;
-    xhr.open( 'GET', 'data/manifest_v2.json?v=6', true );
+    xhr.open( 'GET', 'data/manifest_v2.json?v=7', true );
     xhr.responseType = 'json';
     xhr.send();
 
@@ -468,17 +468,14 @@
     }
 
     function LatLngToWoW( latlng ){
-        return PointToWoW(LeafletMap.project(latlng, Manifest.MapVersions[ Current.Map ][ Current.Version ].Config.MaxZoom), Manifest.Versions[Current.Version].Build);
+        return PointToWoW(LeafletMap.project(latlng, Manifest.MapVersions[ Current.Map ][ Current.Version ].Config.MaxZoom), Manifest.MapVersions[Current.Map][Current.Version].Config);
     }
 
     function PointToWoW( point, offset, build ){
-        var tileSize = 256;
-        if (build > 26707){
-            tileSize = 512;
-        }
+        var tileSize = 512;
 
-        var adtsToCenterX = ((point.y / tileSize) + offset.MinX) - 32;
-        var adtsToCenterY = ((point.x / tileSize) + offset.MinY) - 32;
+        var adtsToCenterX = ((point.y / tileSize) + offset.MinY) - 32;
+        var adtsToCenterY = ((point.x / tileSize) + offset.MinX) - 32;
 
         var ingameX = -(adtsToCenterX * adtSize); // (╯°□°）╯︵ ┻━┻
         var ingameY = -(adtsToCenterY * adtSize); // (╯°□°）╯︵ ┻━┻
@@ -487,12 +484,9 @@
     }
 
     function PointToWoWTile( point, offset, build ){
-        var tileSize = 256;
-        if (build > 26707){
-            tileSize = 512;
-        }
-        var adtX = Math.floor((point.x / tileSize) + offset.MinY);
-        var adtY = Math.floor((point.y / tileSize) + offset.MinX);
+        var tileSize = 512;
+        var adtX = Math.floor((point.x / tileSize) + offset.MinX);
+        var adtY = Math.floor((point.y / tileSize) + offset.MinY);
 
         return new L.Point(adtX, adtY);
     }
