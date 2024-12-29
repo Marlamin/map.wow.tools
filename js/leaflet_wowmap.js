@@ -7,6 +7,7 @@
     var MinimapLayer;
     var ADTGridLayer;
     var ADTGridTextLayer;
+    var DiffLayer;
     var Manifest;
     var Elements =
     {
@@ -19,6 +20,7 @@
         TechBox: document.getElementById( 'js-techbox' ),
         Layers: document.getElementById('js-layers'),
         ADTGrid: document.getElementById('js-adtgrid'),
+        DiffVersions: document.getElementById('js-diffversions'),
     };
 
     var Current =
@@ -73,7 +75,7 @@
 
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = Initialize;
-    xhr.open( 'GET', 'data/manifest_v2.json?v=7', true );
+    xhr.open( 'GET', 'data/manifest_v2.json?v=8', true );
     xhr.responseType = 'json';
     xhr.send();
 
@@ -257,9 +259,19 @@
                 fragment.appendChild( element );
             } );
 
-        Elements.Versions.innerHTML = ''; // A bad way of removing children (from your life)
+        const clone = fragment.cloneNode(true);
+
+        Elements.Versions.innerHTML = '';
         Elements.Versions.appendChild( fragment );
 
+        var noDiffOption = document.createElement('option');
+        noDiffOption.value = 0;
+        noDiffOption.textContent = 'None';
+        clone.prepend(noDiffOption);
+
+        Elements.DiffVersions.innerHTML = ''
+        Elements.DiffVersions.appendChild( clone );
+        
         // If current version is not valid for this map, reset it
         if ( !Manifest.MapVersions[ Current.Map ][ Current.Version ] )
         {
@@ -305,6 +317,8 @@
         } );
 
         Elements.Versions.addEventListener( 'change', ChangeVersion );
+
+        Elements.DiffVersions.addEventListener( 'change', ChangeDiffVersion );
 
         Elements.PrevMap.addEventListener( 'click', function( )
         {
@@ -507,9 +521,17 @@
 
         var center = LeafletMap.getCenter();
         Elements.ADTGrid.checked = false;
-        LeafletMap.removeLayer(ADTGridLayer);
-        LeafletMap.removeLayer(ADTGridTextLayer);
 
+        if(DiffLayer !== undefined && LeafletMap.hasLayer(DiffLayer))
+            LeafletMap.removeLayer(DiffLayer);
+
+        if(ADTGridLayer !== undefined && LeafletMap.hasLayer(ADTGridLayer))
+            LeafletMap.removeLayer(ADTGridLayer);
+
+        if(ADTGridTextLayer !== undefined && LeafletMap.hasLayer(ADTGridTextLayer))
+            LeafletMap.removeLayer(ADTGridTextLayer);
+
+        Elements.DiffVersions.value = 0;
 
         if (isDebug){
             // Don't support offset adjustments when offset is initially unknown
@@ -581,6 +603,58 @@
         SynchronizeTitleAndURL();
     }
 
+    async function ChangeDiffVersion(){
+        d('Changed diff version to ' + Elements.DiffVersions.value + ' from ' + Current.Version);
+
+        if(Elements.DiffVersions.value == 0 || (Elements.DiffVersions.value == Current.Version))
+            return;
+
+        var currentVersionHash = Manifest.MapVersions[ Current.Map ][ Current.Version ].MD5;
+        var otherVersionHash = Manifest.MapVersions[ Current.Map ][ Elements.DiffVersions.value ].MD5;
+
+        // async fetch https://map.wow.tools/data/builds/ currentVersionHash /maps/Azeroth.json
+
+        var fetchCurrent = await fetch('https://map.wow.tools/data/builds/' + currentVersionHash + '/maps/' + Current.InternalMap + '.json').then(response => response.json());
+        var fetchOther = await fetch('https://map.wow.tools/data/builds/' + otherVersionHash + '/maps/' + Current.InternalMap + '.json').then(response => response.json());
+
+        console.log(fetchCurrent);
+        var currentTiles = fetchCurrent.TileHashes;
+        var otherTiles = fetchOther.TileHashes;
+
+        console.log(currentTiles);
+        console.log(otherTiles);
+
+        var diffTiles = [];
+
+        for (var x = 0; x < 64; x++){
+            for (var y = 0; y < 64; y++){
+                if (currentTiles[x][y] != otherTiles[x][y]){
+                    diffTiles.push({x: x, y: y});
+                }
+            }
+        }
+
+        if (DiffLayer != undefined && LeafletMap.hasLayer(DiffLayer)){ LeafletMap.removeLayer(DiffLayer); }
+
+        DiffLayer = new L.LayerGroup();
+
+        // draw rectangle around each changed tile
+        for (var i = 0; i < diffTiles.length; i++){
+            var x = diffTiles[i].y;
+            var y = diffTiles[i].x;
+
+            var fromlat = WoWtoLatLng(maxSize - (x * adtSize), maxSize - (y * adtSize));
+            var tolat = WoWtoLatLng(maxSize - ((x + 1) * adtSize), maxSize - ((y + 1) * adtSize));
+
+            var rectangle = L.rectangle([fromlat, tolat], {color: 'red', weight: 1});
+            rectangle.addTo(DiffLayer);
+        }
+
+        DiffLayer.addTo(LeafletMap);
+
+        console.log(diffTiles);
+    }
+
 
     function RenderMap( center, zoom, isMapChange, urlSet )
     {
@@ -632,15 +706,12 @@
             Elements.ADTGrid.disabled = false;
         }
 
-        if (!isDebug){
-            if (ADTGridLayer != undefined && LeafletMap.hasLayer(ADTGridLayer)){ LeafletMap.removeLayer(ADTGridLayer); }
-        }
-
+        if (ADTGridLayer != undefined && LeafletMap.hasLayer(ADTGridLayer)){ LeafletMap.removeLayer(ADTGridLayer); }
         if (ADTGridTextLayer != undefined &&  LeafletMap.hasLayer(ADTGridTextLayer)){ LeafletMap.removeLayer(ADTGridTextLayer); }
-        if (!isDebug){
-            ADTGridLayer = new L.LayerGroup();
-        }
+        if (DiffLayer != undefined &&  LeafletMap.hasLayer(DiffLayer)){ LeafletMap.removeLayer(DiffLayer); }
+ 
         ADTGridTextLayer = new L.LayerGroup();
+        DiffLayer = new L.LayerGroup();
     }
 
     function SetMapCenterAndZoom( center, zoom, isMapChange, urlSet )
