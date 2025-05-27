@@ -671,7 +671,7 @@
         }
 
         TileLayer = new L.tileLayer("https://tiles.wow.tools/tiles/" + Manifest.MapVersions[ Current.Map ][ Current.Version ].MD5 + "/tiles/" + Current.InternalMap + "/{z}/{y}/{x}.png", {
-            attribution: '<a href="https://old.wow.tools/maps/list.php" title="Raw PNGs used to generate tiles for this viewer">Raw images</a> | By <a href="https://bsky.app/profile/marlam.in" target="_BLANK">Marlamin</a> | &copy; Blizzard Entertainment',
+            attribution: '<!--<a href="https://old.wow.tools/maps/list.php" title="Raw PNGs used to generate tiles for this viewer">Raw images</a> | -->By <a href="https://bsky.app/profile/marlam.in" target="_BLANK">Marlamin</a> | &copy; Blizzard Entertainment',
             bounds: mapbounds,
             maxNativeZoom : Manifest.MapVersions[ Current.Map ][ Current.Version ].Config.MaxZoom,
             maxZoom: 12
