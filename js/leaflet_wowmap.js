@@ -75,7 +75,7 @@
 
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = Initialize;
-    xhr.open( 'GET', 'data/manifest_v2.json?v=8', true );
+    xhr.open( 'GET', 'data/manifest_v2.json?v=10', true );
     xhr.responseType = 'json';
     xhr.send();
 
