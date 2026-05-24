@@ -7,6 +7,7 @@
     var MinimapLayer;
     var ADTGridLayer;
     var ADTGridTextLayer;
+    var MANMLayer;
     var DiffLayer;
     var Manifest;
     var Elements =
@@ -21,6 +22,7 @@
         Layers: document.getElementById('js-layers'),
         ADTGrid: document.getElementById('js-adtgrid'),
         DiffVersions: document.getElementById('js-diffversions'),
+        MANM: document.getElementById('js-manm')
     };
 
     var Current =
@@ -75,7 +77,7 @@
 
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = Initialize;
-    xhr.open( 'GET', 'data/manifest_v2.json?v=10', true );
+    xhr.open( 'GET', 'data/manifest_v2.json?v=21', true );
     xhr.responseType = 'json';
     xhr.send();
 
@@ -99,6 +101,52 @@
 
         InitializeMapOptions();
         InitializeEvents();
+    }
+
+    function drawMANM(){
+        /* ICON STUFF */
+        var coordArr = Array();
+        var i = 0;
+        var xPos = 0;
+        var yPos = 0;
+        for (var x = 0; x < 28; x++){
+            for (var y = 0; y < 14; y++){
+                coordArr[i] = [yPos, xPos];
+                yPos += 18;
+                i++;
+            }
+            yPos = 0;
+            xPos += 18;
+        }
+
+        var mnamxhr = new XMLHttpRequest();
+        mnamxhr.open( 'GET', '/data/manm/kalimdor.json', true );
+        mnamxhr.responseType = 'json';
+        mnamxhr.onreadystatechange = function() {
+            if (mnamxhr.readyState === 4){
+                if (mnamxhr.response.countB == 0){
+                    return;
+                }
+
+                let mnam = mnamxhr.response.manm.entriesB;
+                for (var i = 0; i < mnam.length; i++){
+                    var entry = mnam[i];
+                    for (var j = 0; j < entry.posPlusNormalCount; j++){
+                        var name = "ID " + entry.c + ", index " + j + ", type " + entry.type;
+                  
+                        var newLatLng = WoWtoLatLng(entry.posPlusNormal[j].position.X, entry.posPlusNormal[j].position.Y);
+
+                        // if (j > 1){
+                        //     var prevLatLng = WoWtoLatLng(entry.posPlusNormal[j-1].position.X, entry.posPlusNormal[j-1].position.Y);
+                        //     MANMLayer.addLayer(new L.polyline([prevLatLng, newLatLng], {weight: 1, color: 'red'}));
+                        // }
+                        
+                        MANMLayer.addLayer(new L.marker(newLatLng).bindPopup(name));
+                    }
+                }
+            }
+        }
+        mnamxhr.send();
     }
 
     function InitializeMap()
@@ -344,11 +392,11 @@
                     for (var y = 0; y < 64; y++){
                         var fromlat = WoWtoLatLng(maxSize - (x * adtSize), -maxSize);
                         var tolat = WoWtoLatLng(maxSize - (x * adtSize), maxSize);
-                        ADTGridLayer.addLayer(new L.polyline([fromlat, tolat], {weight: 0.1, color: 'red'}));
+                        ADTGridLayer.addLayer(new L.polyline([fromlat, tolat], {weight: 0.5, color: 'red'}));
 
                         var fromlat = WoWtoLatLng(maxSize, maxSize - (x * adtSize));
                         var tolat = WoWtoLatLng(-maxSize , maxSize - (x * adtSize));
-                        ADTGridLayer.addLayer(new L.polyline([fromlat, tolat], {weight: 0.1, color: 'red'}));
+                        ADTGridLayer.addLayer(new L.polyline([fromlat, tolat], {weight: 0.5, color: 'red'}));
                     }
                 }
                 refreshADTGrid();
@@ -357,6 +405,17 @@
                 d('Disabled ADT grid')
                 LeafletMap.removeLayer(ADTGridLayer);
                 LeafletMap.removeLayer(ADTGridTextLayer);
+            }
+        } );
+
+        Elements.MANM.addEventListener( 'click', function( )
+        {
+            if (Elements.MANM.checked){
+                MANMLayer = new L.LayerGroup();
+                drawMANM();
+                MANMLayer.addTo(LeafletMap);
+            } else {
+                LeafletMap.removeLayer(MANMLayer);
             }
         } );
 
@@ -713,9 +772,11 @@
         if (ADTGridLayer != undefined && LeafletMap.hasLayer(ADTGridLayer)){ LeafletMap.removeLayer(ADTGridLayer); }
         if (ADTGridTextLayer != undefined &&  LeafletMap.hasLayer(ADTGridTextLayer)){ LeafletMap.removeLayer(ADTGridTextLayer); }
         if (DiffLayer != undefined &&  LeafletMap.hasLayer(DiffLayer)){ LeafletMap.removeLayer(DiffLayer); }
+        if (MANMLayer != undefined &&  LeafletMap.hasLayer(MANMLayer)){ LeafletMap.removeLayer(MANMLayer); }
  
         ADTGridTextLayer = new L.LayerGroup();
         DiffLayer = new L.LayerGroup();
+        MANMLayer = new L.LayerGroup();
     }
 
     function SetMapCenterAndZoom( center, zoom, isMapChange, urlSet )
