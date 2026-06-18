@@ -733,8 +733,9 @@
         if(Manifest.MapVersions[ Current.Map ][ Current.Version ].Config.isLowerCase)
             fixedCaseMapName = fixedCaseMapName.toLowerCase();
 
+        const dlLink = "https://tiles.wow.tools/tiles/" + Manifest.MapVersions[ Current.Map ][ Current.Version ].MD5 + "/compiled/" + fixedCaseMapName + ".png";
         TileLayer = new L.tileLayer("https://tiles.wow.tools/tiles/" + Manifest.MapVersions[ Current.Map ][ Current.Version ].MD5 + "/tiles/" + fixedCaseMapName + "/{z}/{y}/{x}.png", {
-            attribution: '<!--<a href="https://old.wow.tools/maps/list.php" title="Raw PNGs used to generate tiles for this viewer">Raw images</a> | -->By <a href="https://bsky.app/profile/marlam.in" target="_BLANK">Marlamin</a> | &copy; Blizzard Entertainment',
+            attribution: '<a href="' + dlLink + '" title="Download full PNG of map. Use Right click -> Save as since browsers can usually not open these properly." download>Download PNG</a> | By <a href="https://bsky.app/profile/marlam.in" target="_BLANK">Marlamin</a> | &copy; Blizzard Entertainment',
             bounds: mapbounds,
             maxNativeZoom : Manifest.MapVersions[ Current.Map ][ Current.Version ].Config.MaxZoom,
             maxZoom: 12
