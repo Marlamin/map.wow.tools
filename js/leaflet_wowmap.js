@@ -408,16 +408,16 @@
             }
         } );
 
-        Elements.MANM.addEventListener( 'click', function( )
-        {
-            if (Elements.MANM.checked){
-                MANMLayer = new L.LayerGroup();
-                drawMANM();
-                MANMLayer.addTo(LeafletMap);
-            } else {
-                LeafletMap.removeLayer(MANMLayer);
-            }
-        } );
+        // Elements.MANM.addEventListener( 'click', function( )
+        // {
+        //     if (Elements.MANM.checked){
+        //         MANMLayer = new L.LayerGroup();
+        //         drawMANM();
+        //         MANMLayer.addTo(LeafletMap);
+        //     } else {
+        //         LeafletMap.removeLayer(MANMLayer);
+        //     }
+        // } );
 
         LeafletMap.on('moveend zoomend dragend', function()
         {
